@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Administrativo — Generador de Prompts IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #00e5a0;
+    --accent2: #3d7fff;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --text: #e8ecf4;
+    --text-muted: #7a8099;
+    --text-dim: #4a5068;
+    --card-hover: #1e2436;
+    --pill-bg: #1e2436;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GLOW BLOBS */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.12;
+  }
+  .blob-1 { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -150px; }
+  .blob-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -100px; }
+  .blob-3 { width: 300px; height: 300px; background: var(--accent4); top: 40%; left: 60%; }
+
+  /* LAYOUT */
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    text-align: center;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .logo-badge .dot {
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-muted);
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  /* SEARCH */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 20px;
+    max-width: 520px;
+    margin: 0 auto 48px;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.08);
+  }
+
+  .search-bar svg { color: var(--text-dim); flex-shrink: 0; }
+
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    width: 100%;
+    placeholder-color: var(--text-dim);
+  }
+
+  .search-bar input::placeholder { color: var(--text-dim); }
+
+  /* CATEGORIES */
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  .cat-btn {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cat-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,229,160,0.06);
+  }
+
+  .cat-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d0f14;
+    font-weight: 600;
+  }
+
+  .cat-btn .cat-count {
+    background: rgba(0,0,0,0.15);
+    border-radius: 100px;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+
+  .cat-btn.active .cat-count {
+    background: rgba(0,0,0,0.2);
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* SECTION TITLE */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* FUNCTION GRID */
+  .functions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 60px;
+  }
+
+  .func-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .func-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.25s;
+    border-radius: inherit;
+  }
+
+  .func-card:hover {
+    border-color: var(--card-accent, var(--accent));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px var(--card-accent, var(--accent));
+    background: var(--card-hover);
+  }
+
+  .func-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .func-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .func-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .func-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .func-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .func-cat {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+
+  .func-arrow {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+
+  .func-card:hover .func-arrow {
+    background: var(--card-accent, var(--accent));
+    color: var(--bg);
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-header {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .modal-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .modal-title-group { flex: 1; }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .modal-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .modal-close:hover { background: var(--accent3); color: white; border-color: var(--accent3); }
+
+  .modal-body { padding: 24px 28px 28px; }
+
+  .modal-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .prompt-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 16px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .prompt-box:hover { border-color: var(--accent); }
+
+  .copy-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0d0f14;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .copy-btn:hover {
+    background: #00ffb3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,229,160,0.3);
+  }
+
+  .copy-btn.copied {
+    background: var(--accent2);
+    color: white;
+  }
+
+  .tip-box {
+    background: rgba(61,127,255,0.06);
+    border: 1px solid rgba(61,127,255,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .tip-box span { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* NO RESULTS */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    display: none;
+  }
+
+  .no-results.show { display: block; }
+
+  .no-results-icon { font-size: 48px; margin-bottom: 12px; }
+
+  .no-results h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  footer strong { color: var(--accent); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .functions-grid { grid-template-columns: 1fr; }
+    .modal { border-radius: 20px; }
+    .modal-header, .modal-body { padding-left: 20px; padding-right: 20px; }
+    .stats-bar { gap: 16px; }
+  }
+
+  /* HIDDEN */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="wrapper">
+  <header>
+    <div class="logo-badge">
+      <div class="dot"></div>
+      Excel Administrativo · IA Tools
+    </div>
+    <h1>Generador de<br>Prompts para Excel</h1>
+    <p class="subtitle">Seleccioná una función, copiá el prompt y pegalo en tu IA favorita para obtener un listado de práctica al instante.</p>
+  </header>
+
+  <div class="search-bar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar función... ej: BUSCARV, FECHA, SI" oninput="filterFunctions()">
+  </div>
+
+  <div class="categories" id="categoriesBar"></div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-label">Funciones</div></div>
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">Categorías</div></div>
+    <div class="stat"><div class="stat-num" id="visibleCount">0</div><div class="stat-label">Mostrando</div></div>
+  </div>
+
+  <div id="functionsContainer"></div>
+  <div class="no-results" id="noResults">
+    <div class="no-results-icon">🔍</div>
+    <h3>No se encontraron funciones</h3>
+    <p>Probá con otro término de búsqueda.</p>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-header">
+      <div class="modal-icon" id="modalIcon"></div>
+      <div class="modal-title-group">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-label">📋 Prompt para copiar</div>
+      <div class="prompt-box" id="modalPrompt"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">
+        <span>📋</span> Copiar Prompt
+      </button>
+      <div class="tip-box" id="modalTip"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+  <footer>
+    Creado para el curso de <strong>Excel Administrativo</strong> · Potenciado con IA
+  </footer>
+</div>
+
+<script>
+// =============================================
+//  DATA — todas las funciones del PDF
+// =============================================
+const CATEGORIES = {
+  "Fechas y Horas":   { color: "#ff6b6b", bg: "rgba(255,107,107,0.12)", icon: "📅" },
+  "Búsqueda":         { color: "#3d7fff", bg: "rgba(61,127,255,0.12)",   icon: "🔍" },
+  "Lógicas":          { color: "#00e5a0", bg: "rgba(0,229,160,0.12)",    icon: "⚡" },
+  "Matemáticas":      { color: "#ffd166", bg: "rgba(255,209,102,0.12)",  icon: "🔢" },
+  "Estadísticas":     { color: "#c77dff", bg: "rgba(199,125,255,0.12)",  icon: "📊" },
+  "Texto":            { color: "#ff9a3c", bg: "rgba(255,154,60,0.12)",   icon: "📝" },
+  "Informativas":     { color: "#4cc9f0", bg: "rgba(76,201,240,0.12)",   icon: "ℹ️" },
+};
+
+const FUNCTIONS = [
+  // ── FECHAS Y HORAS ──
+  { name:"AHORA",       cat:"Fechas y Horas",
+    desc:"Devuelve la fecha y hora actuales del sistema.",
+    prompt:`Crea una tabla de 20 registros de "Registro de llamadas al cliente" con columnas: ID, nombre del cliente, hora de inicio de llamada (valores fijos tipo "08:30", "09:15"...) y duración en minutos (entre 2 y 45). Quiero practicar AHORA() para registrar la hora exacta en que se actualiza el archivo y calcular si la llamada fue hoy.`,
+    tip:"💡 AHORA() se actualiza cada vez que Excel recalcula. Usala en celdas de 'última actualización' de tus reportes." },
+
+  { name:"HOY",         cat:"Fechas y Horas",
+    desc:"Devuelve la fecha de hoy. Se actualiza automáticamente.",
+    prompt:`Genera una lista de 25 registros de "Vencimiento de cuotas" con columnas: cliente, número de cuota, fecha de vencimiento (entre 30 días atrás y 60 días hacia adelante desde hoy). Quiero usar HOY() para calcular cuántos días faltan o llevan de atraso cada cuota, y marcar con texto "VENCIDA", "HOY" o "PENDIENTE".`,
+    tip:"💡 HOY() es la base de casi todo cálculo de fechas en administración. Dominarla es esencial." },
+
+  { name:"FECHA",       cat:"Fechas y Horas",
+    desc:"Construye una fecha a partir de año, mes y día por separado.",
+    prompt:`Crea una tabla de 20 registros de empleados con columnas: nombre, año_ingreso (entre 2018 y 2024), mes_ingreso (1 al 12) y dia_ingreso (1 al 28). Quiero practicar FECHA(año,mes,día) para armar la fecha completa de ingreso en una sola celda y luego calcular antigüedad en años.`,
+    tip:"💡 Muy útil cuando importás datos de sistemas que traen año, mes y día en columnas separadas." },
+
+  { name:"FECHANUMERO", cat:"Fechas y Horas",
+    desc:"Convierte un texto con formato de fecha en un número de fecha real.",
+    prompt:`Genera una lista de 15 filas con columnas: ID de pedido y fecha_texto (fechas escritas como texto: "15-03-2024", "2024/06/20", "01 Enero 2024" mezcladas). Quiero practicar FECHANUMERO() para convertir esos textos en fechas reales de Excel y poder ordenarlas y calcular diferencias.`,
+    tip:"💡 Indispensable cuando copiás datos de sistemas o PDFs donde las fechas llegan como texto." },
+
+  { name:"FECHA.MES",   cat:"Fechas y Horas",
+    desc:"Devuelve la fecha que resulta de sumar o restar meses a una fecha.",
+    prompt:`Crea una tabla de 18 registros de "Contratos de servicio" con columnas: cliente, fecha_inicio (año 2024) y duración en meses (3, 6, 12 ó 24 meses). Quiero practicar FECHA.MES() para calcular la fecha exacta de vencimiento de cada contrato sumando los meses de duración.`,
+    tip:"💡 Perfecta para contratos, cuotas, fechas de revisión periódica y planificación mensual." },
+
+  { name:"FIN.MES",     cat:"Fechas y Horas",
+    desc:"Devuelve el último día del mes indicado.",
+    prompt:`Genera una lista de 12 meses del año 2024 con columnas: nombre_mes, fecha_inicio (01/01/2024, 01/02/2024...). Quiero usar FIN.MES() para calcular el último día de cada mes y el total de días hábiles aproximados. Incluí también 3 casos con meses de años bisiestos para practicar.`,
+    tip:"💡 Muy usada en liquidación de sueldos para saber el último día hábil del mes." },
+
+  { name:"DIAS360",     cat:"Fechas y Horas",
+    desc:"Calcula días entre dos fechas usando año comercial de 360 días.",
+    prompt:`Crea una tabla de 15 préstamos con columnas: cliente, fecha_inicio, fecha_vencimiento (entre 30 y 365 días de diferencia) y monto prestado. Quiero practicar DIAS360() para calcular los días transcurridos bajo el método bancario de 360 días y compararlo con el cálculo normal.`,
+    tip:"💡 El mundo bancario y financiero usa 360 días para estandarizar cálculos de intereses." },
+
+  { name:"DIA.LAB",     cat:"Fechas y Horas",
+    desc:"Devuelve una fecha sumando días laborables (sin fines de semana).",
+    prompt:`Genera una lista de 15 tareas administrativas con columnas: nombre_tarea, fecha_inicio y días_hábiles_para_completar (entre 3 y 20 días). Agrega también una columna con 5 fechas de feriados nacionales del Paraguay 2024. Quiero practicar DIA.LAB() para calcular la fecha real de entrega sin contar fines de semana ni feriados.`,
+    tip:"💡 Esencial para gestión de proyectos y seguimiento de plazos reales de trabajo." },
+
+  { name:"DIAS.LAB",    cat:"Fechas y Horas",
+    desc:"Cuenta los días laborables entre dos fechas.",
+    prompt:`Crea una tabla de 20 empleados con columnas: nombre, fecha_inicio_vacaciones y fecha_fin_vacaciones (períodos de 5 a 20 días dentro del año 2024). Incluí una lista aparte con 8 feriados del año. Quiero practicar DIAS.LAB() para calcular exactamente cuántos días hábiles de vacaciones tomó cada empleado.`,
+    tip:"💡 Fundamental para Recursos Humanos al calcular días de vacaciones reales." },
+
+  { name:"SIFECHA",     cat:"Fechas y Horas",
+    desc:"Calcula la diferencia entre fechas en años, meses o días exactos.",
+    prompt:`Genera una lista de 20 empleados con columnas: nombre, fecha_nacimiento (entre 1970 y 2000) y fecha_ingreso_empresa (entre 2010 y 2023). Quiero practicar SIFECHA() para calcular: edad actual en años completos, antigüedad en la empresa en años y meses, y meses exactos trabajados.`,
+    tip:"💡 SIFECHA es la función 'secreta' de Excel (no aparece en el asistente). Perfecta para calcular antigüedad exacta." },
+
+  { name:"AÑO",         cat:"Fechas y Horas",
+    desc:"Extrae el año de una fecha.",
+    prompt:`Crea una tabla de 30 ventas con columnas: ID_venta, fecha_venta (repartidas entre 2022 y 2024) y monto_venta. Quiero practicar AÑO() para extraer el año de cada venta y luego usar SUMAR.SI para totalizar ventas por año en una tabla resumen aparte.`,
+    tip:"💡 Combinada con SUMAR.SI o Tablas Dinámicas, permite agrupar datos por año fácilmente." },
+
+  { name:"MES",         cat:"Fechas y Horas",
+    desc:"Extrae el número de mes (1 al 12) de una fecha.",
+    prompt:`Genera una lista de 36 registros de "Gastos operativos" con columnas: concepto, fecha_gasto (distribuidas en 3 años, todos los meses) y monto. Quiero usar MES() para extraer el mes de cada gasto y construir una tabla de totales por mes con SUMAR.SI para analizar estacionalidad.`,
+    tip:"💡 Con MES() + SUMAR.SI construís comparativas mensuales en minutos." },
+
+  { name:"DIA",         cat:"Fechas y Horas",
+    desc:"Extrae el día del mes de una fecha.",
+    prompt:`Crea una tabla de 25 pagos de clientes con columnas: cliente, fecha_pago (fechas variadas de un mismo mes) y monto_pagado. Quiero practicar DIA() para identificar en qué día del mes se concentran más pagos y calcular si el pago fue en la primera o segunda quincena.`,
+    tip:"💡 Útil para analizar patrones de pago y comportamiento de clientes por quincena." },
+
+  { name:"DIASEM",      cat:"Fechas y Horas",
+    desc:"Devuelve el día de la semana de una fecha (1=domingo ó lunes).",
+    prompt:`Genera una lista de 20 eventos o reuniones de empresa con columnas: nombre_evento y fecha (distintas fechas de 2024). Quiero practicar DIASEM() para identificar en qué día de la semana cae cada evento y usar SI() para marcar si es día hábil o fin de semana.`,
+    tip:"💡 Combiná DIASEM con SI para resaltar automáticamente fines de semana en tus planillas." },
+
+  { name:"NUM.DE.SEMANA", cat:"Fechas y Horas",
+    desc:"Devuelve el número de semana del año para una fecha.",
+    prompt:`Crea una tabla de 24 registros de "Despachos de mercadería" con columnas: número_despacho, fecha_despacho (a lo largo del año 2024) y cantidad_unidades. Quiero practicar NUM.DE.SEMANA() para agrupar despachos por semana del año y analizar cuáles semanas tuvieron más movimiento.`,
+    tip:"💡 Muy útil en logística y gestión de inventario para analizar tendencias semanales." },
+
+  { name:"FRAC.AÑO",    cat:"Fechas y Horas",
+    desc:"Calcula la fracción del año que representan los días entre dos fechas.",
+    prompt:`Genera una lista de 15 proyectos con columnas: nombre_proyecto, fecha_inicio y fecha_fin (proyectos de 1 a 18 meses de duración en 2023-2024). Quiero usar FRAC.AÑO() para calcular qué fracción del año duró cada proyecto y calcular el costo proporcional anual de cada uno.`,
+    tip:"💡 Muy usada en finanzas para calcular intereses y amortizaciones proporcionales al período." },
+
+  { name:"NSHORA",      cat:"Fechas y Horas",
+    desc:"Construye un valor de hora a partir de horas, minutos y segundos.",
+    prompt:`Crea una tabla de 15 registros de "Turnos de atención al cliente" con columnas: empleado, hora_inicio_turno (número entre 6 y 14), minuto_inicio (0, 15, 30 ó 45) y duración_horas (4, 6 u 8). Quiero practicar NSHORA() para construir la hora de inicio y calcular la hora exacta de fin del turno.`,
+    tip:"💡 Usala cuando tenés las partes del tiempo en columnas separadas y necesitás un valor hora real." },
+
+  { name:"HORANUMERO",  cat:"Fechas y Horas",
+    desc:"Convierte un texto de hora en un número decimal de hora.",
+    prompt:`Genera una tabla de 20 registros de "Entradas y salidas de personal" con columnas: empleado y hora_fichaje (escrita como texto: "08:30 AM", "14:00", "17:45:00" en formatos mezclados). Quiero practicar HORANUMERO() para convertir esos textos en valores hora reales y calcular horas trabajadas.`,
+    tip:"💡 Imprescindible cuando importás registros de fichaje o asistencia de otros sistemas." },
+
+  { name:"HORA",        cat:"Fechas y Horas",
+    desc:"Extrae la parte de horas de un valor de hora.",
+    prompt:`Crea una tabla de 20 llamadas de soporte técnico con columnas: ID_caso, hora_inicio y hora_fin (valores de hora entre 08:00 y 18:00). Quiero practicar HORA() y MINUTO() para extraer los componentes y calcular cuántas llamadas duraron más de una hora versus menos.`,
+    tip:"💡 Combiná HORA() y MINUTO() para calcular duraciones y analizar distribución horaria." },
+
+  { name:"MINUTO",      cat:"Fechas y Horas",
+    desc:"Extrae los minutos de un valor de hora.",
+    prompt:`Genera 15 registros de "Tiempos de proceso de producción" con columnas: proceso, tiempo_inicio y tiempo_fin (horas del día, diferencias de 15 a 90 minutos). Quiero practicar MINUTO() para extraer los minutos de cada hora y calcular el tiempo total en minutos de cada proceso.`,
+    tip:"💡 Con HORA()*60 + MINUTO() convertís cualquier hora a minutos totales, ideal para promedios." },
+
+  { name:"SEGUNDO",     cat:"Fechas y Horas",
+    desc:"Extrae los segundos de un valor de hora.",
+    prompt:`Crea una tabla de 12 registros de "Tiempos de carga de páginas web" o "Tiempos de respuesta de sistema" con columnas: proceso, tiempo_inicio y tiempo_fin (con diferencias de segundos, tipo "00:00:45", "00:02:13"). Quiero practicar SEGUNDO() para calcular tiempos exactos en segundos.`,
+    tip:"💡 Usada principalmente en control de calidad y medición de procesos con precisión de segundos." },
+
+  // ── BÚSQUEDA ──
+  { name:"BUSCARV",     cat:"Búsqueda",
+    desc:"Busca un valor en la primera columna de una tabla y retorna un dato de otra columna.",
+    prompt:`Crea DOS tablas separadas. Tabla 1 (Catálogo de productos): 20 filas con columnas ID_producto (P001 a P020), nombre_producto, categoría y precio_unitario. Tabla 2 (Detalle de factura): 15 filas con columnas número_factura, ID_producto (mezclados, algunos repetidos), cantidad. Los ID_producto deben existir en la Tabla 1. Quiero practicar BUSCARV para traer el nombre y el precio de la Tabla 1 a la Tabla 2 y calcular el subtotal.`,
+    tip:"💡 BUSCARV es la función más usada en administración. El ID buscado SIEMPRE debe estar en la columna izquierda de la tabla." },
+
+  { name:"BUSCARH",     cat:"Búsqueda",
+    desc:"Igual que BUSCARV pero busca en filas horizontales.",
+    prompt:`Crea una tabla horizontal de comisiones por categoría de vendedor y rango de ventas: la primera fila son los rangos (0-1M, 1M-3M, 3M-5M, +5M) y la primera columna son las categorías (Junior, Senior, Master). Luego crea 15 registros de vendedores con nombre, categoría y monto_vendido. Quiero practicar BUSCARH para encontrar el porcentaje de comisión correcto según el monto.`,
+    tip:"💡 BUSCARH funciona igual que BUSCARV pero para tablas con encabezados en filas, no en columnas." },
+
+  { name:"BUSCAR",      cat:"Búsqueda",
+    desc:"Versión más flexible de búsqueda (vectorial y matricial).",
+    prompt:`Genera una tabla de 20 registros de "Notas de alumnos" con columnas: nombre_alumno y promedio_final (números del 1 al 10 con decimales). Crea también una tabla de equivalencias: rango_mínimo (1,5,6,7,9) y calificación_texto ("Insuficiente","Suficiente","Bien","Muy Bien","Sobresaliente"). Quiero practicar BUSCAR() en forma vectorial para asignar la calificación correcta a cada promedio.`,
+    tip:"💡 BUSCAR vectorial es ideal para buscar en tablas de rangos donde BUSCARV daría error." },
+
+  { name:"INDICE",      cat:"Búsqueda",
+    desc:"Devuelve el valor de una celda dentro de un rango según fila y columna.",
+    prompt:`Crea una matriz de precios de 5 productos (filas) × 4 zonas geográficas (columnas). Luego genera 15 registros de pedidos con columnas: número_pedido, producto (1 a 5) y zona (1 a 4). Quiero practicar INDICE() para extraer el precio correcto de la matriz según el producto y zona de cada pedido.`,
+    tip:"💡 INDICE+COINCIDIR es la alternativa profesional a BUSCARV, sin la limitación de buscar solo a la derecha." },
+
+  { name:"ELEGIR",      cat:"Búsqueda",
+    desc:"Elige un valor de una lista según un número índice.",
+    prompt:`Genera una tabla de 20 empleados con columnas: nombre, turno (número del 1 al 3) y día_de_la_semana (número del 1 al 5). Quiero practicar ELEGIR() para convertir el número de turno en texto ("Mañana","Tarde","Noche") y el número del día en su nombre ("Lunes","Martes"...).`,
+    tip:"💡 ELEGIR es perfecta para convertir códigos numéricos en texto descriptivo sin tablas auxiliares." },
+
+  { name:"COINCIDIR",   cat:"Búsqueda",
+    desc:"Devuelve la posición relativa de un valor dentro de un rango.",
+    prompt:`Crea una lista de 10 productos con sus nombres y una segunda lista de 20 facturas con nombre_producto vendido. Quiero practicar COINCIDIR() para encontrar en qué posición aparece cada producto de la factura dentro del catálogo, y luego combinarla con INDICE() para traer el precio.`,
+    tip:"💡 COINCIDIR sola dice 'en qué fila está'. Combinada con INDICE es imbatible para búsquedas complejas." },
+
+  { name:"INDIRECTO",   cat:"Búsqueda",
+    desc:"Devuelve la referencia indicada por un texto (referencia dinámica).",
+    prompt:`Crea 3 hojas: "Enero", "Febrero", "Marzo", cada una con una tabla de ventas por vendedor (mismos 5 vendedores, montos distintos). En la hoja principal crea una tabla resumen con columnas: vendedor y un campo donde se escribe el nombre del mes. Quiero practicar INDIRECTO() para que el resumen traiga los datos del mes que se escriba dinámicamente.`,
+    tip:"💡 INDIRECTO permite que tus fórmulas cambien de hoja o rango según lo que escribás en una celda." },
+
+  { name:"TRANSPONER",  cat:"Búsqueda",
+    desc:"Convierte filas en columnas y viceversa.",
+    prompt:`Genera una tabla de resumen mensual con 12 meses en columnas (Jan-Dic) y 5 productos en filas, con valores de venta. Quiero practicar TRANSPONER() para convertir esa tabla horizontal en una tabla vertical con los meses como filas y los productos como columnas, para usarla en un gráfico.`,
+    tip:"💡 TRANSPONER como fórmula matricial (Ctrl+Shift+Enter en versiones antiguas) convierte la orientación de tus tablas." },
+
+  { name:"DIRECCION",   cat:"Búsqueda",
+    desc:"Construye la dirección de una celda como texto a partir de fila y columna.",
+    prompt:`Crea una tabla de 15 productos con nombre y precio. Quiero practicar DIRECCION() para construir dinámicamente la referencia de la celda que contiene el precio más alto, combinarla con INDIRECTO() para leer su valor, y con COINCIDIR() para saber en qué fila está el máximo.`,
+    tip:"💡 DIRECCION es avanzada pero poderosa: genera referencias de celdas como texto para usarlas en otras fórmulas." },
+
+  { name:"IMPORTARDATOSDINAMICOS", cat:"Búsqueda",
+    desc:"Extrae datos específicos de una Tabla Dinámica hacia otras celdas.",
+    prompt:`Crea una lista de 30 ventas con columnas: vendedor (5 nombres), producto (4 productos), región (Norte/Sur/Centro) y monto. Quiero que primero cree la Tabla Dinámica yo mismo, y luego practicar IMPORTARDATOSDINAMICOS() para extraer valores específicos como "total de Juan en Norte" o "promedio de Producto A" hacia celdas de un dashboard.`,
+    tip:"💡 Esta función te permite 'sacar' números específicos de una Tabla Dinámica y usarlos en informes dinámicos." },
+
+  // ── LÓGICAS ──
+  { name:"SI",          cat:"Lógicas",
+    desc:"Evalúa una condición y devuelve un valor si es verdadera u otro si es falsa.",
+    prompt:`Genera una tabla de 20 empleados con columnas: nombre, sueldo_base (entre 2.500.000 y 9.000.000 Gs) y días_trabajados (entre 18 y 30). Quiero practicar SI() para: 1) calcular si cobra sueldo completo o proporcional, 2) asignar "CUMPLE" o "NO CUMPLE" según si trabajó 20 días o más, y 3) calcular un bono del 10% solo si el sueldo supera 5.000.000.`,
+    tip:"💡 SI() es la función más importante de Excel. Todo análisis condicional parte de ella. Practicala mucho." },
+
+  { name:"Y",           cat:"Lógicas",
+    desc:"Devuelve VERDADERO solo si TODAS las condiciones son verdaderas.",
+    prompt:`Crea una tabla de 20 solicitudes de crédito con columnas: cliente, ingresos_mensuales (entre 1M y 10M Gs), antigüedad_laboral_años (1 a 15), deudas_activas (SI/NO) y historial_crediticio ("Bueno","Regular","Malo"). Quiero practicar Y() dentro de un SI() para aprobar automáticamente el crédito solo si: ingresos > 3M Y antigüedad > 2 años Y sin deudas Y historial "Bueno".`,
+    tip:"💡 Y() dentro de SI() permite poner múltiples requisitos que TODOS deben cumplirse. Ideal para aprobaciones." },
+
+  { name:"O",           cat:"Lógicas",
+    desc:"Devuelve VERDADERO si AL MENOS UNA condición es verdadera.",
+    prompt:`Genera una tabla de 20 clientes con columnas: nombre, días_de_atraso (0 a 120 días), monto_deuda (0 a 5.000.000) y cantidad_cuotas_impagas (0 a 6). Quiero practicar O() dentro de SI() para marcar a un cliente como "RIESGO ALTO" si: días_atraso > 60 O monto_deuda > 2.000.000 O cuotas_impagas >= 3.`,
+    tip:"💡 O() dentro de SI() activa la condición cuando CUALQUIER criterio se cumple. Perfecto para alertas." },
+
+  // ── MATEMÁTICAS ──
+  { name:"SUMA",        cat:"Matemáticas",
+    desc:"Suma un rango de valores.",
+    prompt:`Crea una tabla de gastos del mes con 25 registros y columnas: fecha, categoría (Suministros, Servicios, Personal, Transporte, Otros), descripción del gasto y monto. Quiero practicar SUMA() para calcular el total general, y también subtotales por semana usando rangos manuales.`,
+    tip:"💡 SUMA es básica pero dominar rangos no contiguos (=SUMA(A1:A5,C1:C5)) ahorra tiempo en reportes." },
+
+  { name:"SUMAR.SI",    cat:"Matemáticas",
+    desc:"Suma solo las celdas que cumplen una condición.",
+    prompt:`Genera una lista de 30 ventas con columnas: fecha, vendedor (5 nombres que se repiten), región (Norte/Sur/Centro/Este) y monto_venta. Quiero practicar SUMAR.SI() para calcular el total vendido por cada vendedor y por cada región en una tabla resumen aparte.`,
+    tip:"💡 SUMAR.SI es la función #1 en reportes de ventas. Estructura: =SUMAR.SI(rango_criterio, criterio, rango_suma)" },
+
+  { name:"SUMAR.SI.CONJUNTO", cat:"Matemáticas",
+    desc:"Suma con múltiples condiciones simultáneas.",
+    prompt:`Crea una tabla de 35 ventas con columnas: fecha (en 2024), vendedor (4 nombres), producto (3 productos) y monto. Quiero practicar SUMAR.SI.CONJUNTO() para calcular: total de "Ana" en el producto "Laptop", total de ventas de "Carlos" en el primer trimestre, y total de un producto específico en una región específica.`,
+    tip:"💡 Cuando SUMAR.SI no alcanza porque necesitás 2 o más filtros, usá SUMAR.SI.CONJUNTO." },
+
+  { name:"SUBTOTALES",  cat:"Matemáticas",
+    desc:"Calcula subtotales ignorando otras filas de subtotal (ideal con filtros).",
+    prompt:`Genera una lista de 40 registros de inventario con columnas: producto, categoría (4 categorías), proveedor (5 proveedores) y valor_stock. Quiero practicar SUBTOTALES() con las funciones 9(SUMA), 2(CONTAR) y 1(PROMEDIO) para que los totales se actualicen automáticamente cuando aplique filtros por categoría o proveedor.`,
+    tip:"💡 A diferencia de SUMA, SUBTOTALES solo cuenta lo que está visible después de aplicar un filtro. ¡Imprescindible!" },
+
+  { name:"REDONDEAR",   cat:"Matemáticas",
+    desc:"Redondea un número a la cantidad de decimales indicada.",
+    prompt:`Genera una tabla de 20 facturas con columnas: cliente, subtotal (valores con 4-5 decimales resultado de cálculos como precio×cantidad×impuesto), tasa_IVA (10%). Quiero practicar REDONDEAR() para que el IVA y el total siempre muestren exactamente 2 decimales, como en una factura real.`,
+    tip:"💡 En facturas y liquidaciones de sueldos, REDONDEAR evita diferencias de centavos por acumulación de decimales." },
+
+  { name:"REDONDEAR.MAS", cat:"Matemáticas",
+    desc:"Redondea siempre hacia arriba (alejándose del cero).",
+    prompt:`Crea una tabla de 15 proyectos con columnas: nombre_proyecto, horas_estimadas (con decimales, tipo 7.3, 12.8, 4.1) y costo_por_hora. Quiero practicar REDONDEAR.MAS() para calcular que las horas siempre se cobren completas (7.3 horas = 8 horas cobradas) y comparar el total con el cálculo exacto.`,
+    tip:"💡 Usada en presupuestos y cotizaciones donde siempre se redondea a favor del proveedor." },
+
+  { name:"REDONDEAR.MENOS", cat:"Matemáticas",
+    desc:"Redondea siempre hacia abajo (acercándose al cero).",
+    prompt:`Genera una tabla de 15 empleados con columnas: nombre, salario_diario y días_trabajados (con decimales, tipo 22.7, 18.3). Quiero practicar REDONDEAR.MENOS() para calcular el pago considerando solo días completos trabajados (22.7 días = 22 días pagados) y ver la diferencia con el cálculo exacto.`,
+    tip:"💡 Útil cuando querés truncar sin importar los decimales, siempre a la baja. Similar a TRUNCAR pero en cualquier decimal." },
+
+  { name:"TRUNCAR",     cat:"Matemáticas",
+    desc:"Elimina los decimales de un número sin redondear.",
+    prompt:`Crea una tabla de 15 cálculos de comisiones con columnas: vendedor, ventas_totales y porcentaje_comision (5%, 7%, 10%). Quiero practicar TRUNCAR() para cortar la comisión calculada al entero o a 2 decimales sin redondear, y comparar el resultado con REDONDEAR() para ver las diferencias.`,
+    tip:"💡 TRUNCAR simplemente 'corta' los decimales. 7.9 con TRUNCAR = 7. Con REDONDEAR = 8. ¡Son diferentes!" },
+
+  { name:"ABS",         cat:"Matemáticas",
+    desc:"Devuelve el valor absoluto (siempre positivo) de un número.",
+    prompt:`Genera una tabla de conciliación bancaria con 20 movimientos: descripción, monto_según_banco y monto_según_contabilidad (algunos con diferencias positivas y negativas). Quiero practicar ABS() para calcular la diferencia absoluta entre ambos registros sin importar quién tiene el mayor valor, y sumar el total de diferencias.`,
+    tip:"💡 ABS es esencial en conciliaciones y controles donde las diferencias pueden ser positivas o negativas." },
+
+  { name:"ALEATORIO",   cat:"Matemáticas",
+    desc:"Genera un número aleatorio entre 0 y 1.",
+    prompt:`Quiero crear yo mismo una lista de 20 números de sorteo. Explicame cómo usar ALEATORIO() para generar números decimales entre 0 y 1, y luego cómo multiplicarlos para obtener números en otros rangos. Incluí ejemplos de cómo usarlo para simular porcentajes de variación de precios (entre -5% y +5%).`,
+    tip:"💡 ALEATORIO() se recalcula cada vez que cambia algo en el archivo. Pegá los valores con Pegado Especial para fijarlos." },
+
+  { name:"ALEATORIO.ENTRE", cat:"Matemáticas",
+    desc:"Genera un número entero aleatorio entre dos valores.",
+    prompt:`Crea tú mismo una tabla de práctica de 25 registros de "Ventas simuladas" con columnas: vendedor (5 nombres fijos), mes (1 al 12) y monto_venta generado con ALEATORIO.ENTRE(500000, 5000000). Quiero ver el ejemplo construido y luego practicar SUMAR.SI y Tablas Dinámicas sobre esos datos.`,
+    tip:"💡 ALEATORIO.ENTRE es tu mejor aliado para generar datos de práctica sin esperar ejemplos del profesor." },
+
+  { name:"NUMERO.ROMANO", cat:"Matemáticas",
+    desc:"Convierte un número arábigo en número romano.",
+    prompt:`Genera una lista de 15 capítulos o secciones de un documento formal con columnas: número_capítulo (1 al 15) y título. Quiero practicar NUMERO.ROMANO() para generar automáticamente la numeración romana de cada capítulo (I, II, III...) para el índice de un informe ejecutivo.`,
+    tip:"💡 Muy útil para generar numeración romana en índices, actas notariales o documentos formales automáticamente." },
+
+  // ── ESTADÍSTICAS ──
+  { name:"PROMEDIO",    cat:"Estadísticas",
+    desc:"Calcula el promedio aritmético de un rango.",
+    prompt:`Crea una tabla de 20 empleados con columnas: nombre, departamento (4 departamentos) y calificación_desempeño (nota del 1 al 10). Quiero practicar PROMEDIO() para calcular el promedio general de la empresa y también el promedio por departamento usando PROMEDIO.SI.`,
+    tip:"💡 PROMEDIO ignora celdas vacías pero no ceros. Si un empleado tiene 0, lo incluye en el cálculo." },
+
+  { name:"PROMEDIO.SI", cat:"Estadísticas",
+    desc:"Promedio de celdas que cumplen una condición.",
+    prompt:`Genera una lista de 30 productos con columnas: nombre, categoría (Electrónica/Ropa/Alimentos/Hogar), precio y calificación_cliente (1 a 5 estrellas). Quiero practicar PROMEDIO.SI() para calcular el precio promedio y la calificación promedio de cada categoría en una tabla resumen.`,
+    tip:"💡 PROMEDIO.SI tiene la misma lógica que SUMAR.SI. Si ya dominás uno, el otro es casi automático." },
+
+  { name:"PROMEDIO.SI.CONJUNTO", cat:"Estadísticas",
+    desc:"Promedio con múltiples condiciones.",
+    prompt:`Crea una tabla de 35 ventas con columnas: vendedor (4 nombres), región (Norte/Sur/Centro) y monto_venta. Quiero practicar PROMEDIO.SI.CONJUNTO() para calcular el ticket promedio de un vendedor específico en una región específica, y comparar el desempeño entre combinaciones.`,
+    tip:"💡 Igual que SUMAR.SI.CONJUNTO pero calcula promedios. Perfecto para análisis de rendimiento cruzado." },
+
+  { name:"MEDIANA",     cat:"Estadísticas",
+    desc:"Devuelve el valor central de un conjunto de datos.",
+    prompt:`Genera una lista de 25 salarios de empleados con columnas: nombre, cargo y salario_mensual (entre 2M y 15M con algunos valores muy altos que distorsionen el promedio). Quiero comparar PROMEDIO() vs MEDIANA() para mostrar cuál representa mejor al empleado 'típico' cuando hay sueldos extremos.`,
+    tip:"💡 La MEDIANA es mejor que el PROMEDIO cuando hay valores extremos. 5 personas ganan 2M y 1 gana 50M: el promedio miente, la mediana no." },
+
+  { name:"MODA",        cat:"Estadísticas",
+    desc:"Devuelve el valor que más se repite en un conjunto.",
+    prompt:`Crea una tabla de 30 ventas con columnas: ID_venta, vendedor y monto_venta (valores que se repiten bastante: 500000, 750000, 1000000, 1500000, 2000000). Quiero practicar MODA() para encontrar el monto de venta más frecuente y usarla también con calificaciones de satisfacción del 1 al 5.`,
+    tip:"💡 MODA te dice qué valor ocurre más seguido. Muy útil en análisis de satisfacción y rangos de precio más vendidos." },
+
+  { name:"MAX",         cat:"Estadísticas",
+    desc:"Devuelve el valor máximo de un rango.",
+    prompt:`Genera una tabla de "Torneos de ventas" con 20 vendedores, columnas: nombre, ventas_enero, ventas_febrero y ventas_marzo. Quiero practicar MAX() para encontrar el mejor mes de cada vendedor, el vendedor top del trimestre, y combinar MAX con SI para identificar qué vendedor logró el máximo.`,
+    tip:"💡 Combiná MAX con COINCIDIR para no solo saber el valor máximo sino también QUIÉN lo logró." },
+
+  { name:"JERARQUIA",   cat:"Estadísticas",
+    desc:"Devuelve el rango o posición de un número dentro de una lista.",
+    prompt:`Crea una tabla de 15 vendedores con columnas: nombre y total_ventas_trimestre (montos variados). Quiero practicar JERARQUIA() para asignar el puesto 1°, 2°, 3°... a cada vendedor según sus ventas (de mayor a menor) y también de menor a mayor para identificar los que necesitan más apoyo.`,
+    tip:"💡 JERARQUIA es perfecta para rankings automáticos que se actualizan solos cuando cambian los datos." },
+
+  { name:"CONTAR.BLANCO", cat:"Estadísticas",
+    desc:"Cuenta las celdas vacías en un rango.",
+    prompt:`Genera una tabla de 25 empleados con columnas: nombre, teléfono_1, teléfono_2, email y dirección. Dejá algunos campos vacíos intencionalmente (entre 15 y 20 celdas vacías distribuidas). Quiero practicar CONTAR.BLANCO() para auditar qué tan completo está el registro de datos de cada columna.`,
+    tip:"💡 Ideal para auditar la completitud de bases de datos. Si tenés 100 clientes y 30 blancos en email, te falta el 30% de datos." },
+
+  { name:"CONTARA",     cat:"Estadísticas",
+    desc:"Cuenta celdas que no están vacías (texto, números, cualquier valor).",
+    prompt:`Crea una tabla de seguimiento de 30 tareas con columnas: tarea, responsable, fecha_asignación y fecha_completado (esta última con algunas celdas vacías —tarea pendiente— y otras con fecha —completada—). Quiero practicar CONTARA() para contar cuántas tareas están completadas y calcular el porcentaje de avance del proyecto.`,
+    tip:"💡 CONTARA cuenta cualquier celda con contenido. CONTAR solo cuenta números. Saberlo evita errores graves." },
+
+  { name:"CONTAR.SI",   cat:"Estadísticas",
+    desc:"Cuenta las celdas que cumplen un criterio.",
+    prompt:`Genera una lista de 35 clientes con columnas: nombre, ciudad (6 ciudades distintas), estado_cuenta ("Al día","Atrasado","Moroso","Inactivo") y categoría ("A","B","C"). Quiero practicar CONTAR.SI() para contar cuántos clientes hay por ciudad, cuántos están en cada estado de cuenta, y cuántos son de categoría A.`,
+    tip:"💡 CONTAR.SI para texto usa comillas: =CONTAR.SI(rango,\"Moroso\"). Para números: =CONTAR.SI(rango,\">1000000\")" },
+
+  // ── TEXTO ──
+  { name:"TEXTO",       cat:"Texto",
+    desc:"Convierte un número o fecha en texto con formato específico.",
+    prompt:`Crea una tabla de 15 facturas con columnas: número_factura (entero), fecha_factura (fecha Excel) y monto_total. Quiero practicar TEXTO() para: mostrar la fecha como "15 de Marzo de 2024", mostrar el monto con formato "Gs. 1.250.000" y crear un código de referencia combinando el mes en texto con el número de factura.`,
+    tip:"💡 TEXTO es la función para dar formato a números dentro de fórmulas. Esencial para crear etiquetas y títulos dinámicos." },
+
+  { name:"VALOR",       cat:"Texto",
+    desc:"Convierte texto que representa un número en un número real.",
+    prompt:`Genera una tabla de 20 registros importados de otro sistema con columnas: ID y monto_importado (montos guardados como texto con formato "$1.250.000" o "1250000,00" que Excel no reconoce como número). Quiero practicar VALOR() para convertirlos en números reales y poder sumarlos correctamente.`,
+    tip:"💡 Si una celda tiene número pero no podés sumarla, es texto disfrazado de número. VALOR() lo soluciona." },
+
+  { name:"CONCATENAR",  cat:"Texto",
+    desc:"Une (concatena) varios textos en uno solo.",
+    prompt:`Crea una tabla de 20 empleados con columnas separadas: apellido, nombre, departamento y número_legajo. Quiero practicar CONCATENAR() (y también el operador &) para crear: nombre completo "APELLIDO, Nombre", código de empleado "RRHH-0023", y un mensaje personalizado tipo "El empleado Juan Pérez pertenece al área Ventas".`,
+    tip:"💡 Hoy se recomienda usar la función UNIRCADENAS o el símbolo & en lugar de CONCATENAR, pero el concepto es el mismo." },
+
+  { name:"DERECHA",     cat:"Texto",
+    desc:"Extrae los caracteres del lado derecho de un texto.",
+    prompt:`Genera una lista de 20 códigos de producto con formato mixto: "CAT-PROD-0023", "ELECT-001", "ROPAinf-0156" (longitudes distintas). Quiero practicar DERECHA() para extraer los últimos 4 caracteres (número de secuencia) de cada código y también para extraer las extensiones de archivos tipo ".xlsx", ".pdf", ".docx".`,
+    tip:"💡 DERECHA, IZQUIERDA y EXTRAE son el trío para limpiar y separar datos de texto. Aprendelas juntas." },
+
+  { name:"IZQUIERDA",   cat:"Texto",
+    desc:"Extrae los caracteres del lado izquierdo de un texto.",
+    prompt:`Crea una tabla de 20 códigos de empleados con formato "DEP-LEGAJO": "VEN-00234", "ADM-00156", "LOG-00089". Quiero practicar IZQUIERDA() para extraer los primeros 3 caracteres (código de departamento) y usar SUMAR.SI con ese resultado para totalizar salarios por departamento.`,
+    tip:"💡 Muy usada para extraer prefijos de códigos o los primeros dígitos de números de documento." },
+
+  { name:"ESPACIOS",    cat:"Texto",
+    desc:"Elimina espacios extras al inicio, final y entre palabras.",
+    prompt:`Genera una lista de 15 nombres de clientes intencionalmente mal escritos con espacios extra: "  Juan Pérez  ", "María   García", "  Carlos López " (con espacios al inicio, al final y dobles en el medio). Quiero practicar ESPACIOS() para limpiarlos y poder luego comparar y buscar sin errores por espacios.`,
+    tip:"💡 El problema más silencioso en Excel: dos celdas que 'parecen iguales' pero una tiene espacio. ESPACIOS() las iguala." },
+
+  { name:"EXTRAE",      cat:"Texto",
+    desc:"Extrae una cantidad de caracteres desde una posición específica.",
+    prompt:`Crea una tabla de 20 números de cédula de identidad paraguayos con formato "1.234.567-8" (con puntos y guión). Quiero practicar EXTRAE() junto con HALLAR() para extraer: solo los dígitos sin puntos ni guión, el dígito verificador final, y construir una versión limpia del número.`,
+    tip:"💡 EXTRAE(texto, posición_inicio, cantidad_caracteres). Combinada con HALLAR localizás el punto de corte dinámicamente." },
+
+  { name:"HALLAR",      cat:"Texto",
+    desc:"Encuentra la posición de un texto dentro de otro (sin distinguir mayúsculas).",
+    prompt:`Genera una lista de 15 direcciones completas en una sola celda tipo "Av. San Martín 1234, Asunción, Paraguay". Quiero practicar HALLAR() para encontrar la posición de la coma y combinarla con IZQUIERDA() y EXTRAE() para separar automáticamente la calle, la ciudad y el país en columnas distintas.`,
+    tip:"💡 HALLAR no diferencia mayúsculas/minúsculas. ENCONTRAR sí las diferencia. Para la mayoría de casos, HALLAR es suficiente." },
+
+  // ── INFORMATIVAS ──
+  { name:"ESBLANCO",    cat:"Informativas",
+    desc:"Devuelve VERDADERO si la celda está vacía.",
+    prompt:`Crea una tabla de control de entrega de documentos de 20 empleados con columnas: nombre, fecha_entrega_CV, fecha_entrega_contrato, fecha_entrega_foto y fecha_entrega_antecedentes (con varias celdas vacías intencionalmente). Quiero practicar ESBLANCO() para identificar documentos pendientes y crear un semáforo con SI(ESBLANCO(...),"PENDIENTE","ENTREGADO").`,
+    tip:"💡 ESBLANCO es más confiable que comparar con '' para detectar celdas realmente vacías. Úsala en validaciones de formularios." },
+
+  { name:"ESERROR",     cat:"Informativas",
+    desc:"Devuelve VERDADERO si la celda contiene cualquier tipo de error.",
+    prompt:`Genera una tabla de 20 facturas con columnas: número_factura, ID_cliente y monto. Crea también una tabla de clientes con 15 registros donde algunos ID de las facturas NO existen en la tabla de clientes (para que BUSCARV genere errores #N/A). Quiero practicar SI(ESERROR(BUSCARV(...)),"No encontrado", BUSCARV(...)) para manejar los errores elegantemente.`,
+    tip:"💡 Nada peor que un informe lleno de #N/A. ESERROR dentro de SI() convierte esos errores en mensajes amigables." },
+];
+
+// =============================================
+//  STATE
+// =============================================
+let activeCategory = "Todas";
+let currentFunc = null;
+
+// =============================================
+//  INIT
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('totalCount').textContent = FUNCTIONS.length;
+  buildCategories();
+  renderFunctions(FUNCTIONS);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+});
+
+// =============================================
+//  CATEGORIES
+// =============================================
+function buildCategories() {
+  const bar = document.getElementById('categoriesBar');
+  const counts = {};
+  FUNCTIONS.forEach(f => { counts[f.cat] = (counts[f.cat] || 0) + 1; });
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn active';
+  allBtn.innerHTML = `<span>🗂️</span> Todas <span class="cat-count">${FUNCTIONS.length}</span>`;
+  allBtn.onclick = () => selectCategory("Todas", allBtn);
+  bar.appendChild(allBtn);
+
+  Object.keys(CATEGORIES).forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    const c = CATEGORIES[cat];
+    btn.innerHTML = `<span>${c.icon}</span> ${cat} <span class="cat-count">${counts[cat] || 0}</span>`;
+    btn.onclick = () => selectCategory(cat, btn);
+    bar.appendChild(btn);
+  });
+}
+
+function selectCategory(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('searchInput').value = '';
+  filterFunctions();
+}
+
+// =============================================
+//  FILTER & RENDER
+// =============================================
+function filterFunctions() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  let filtered = FUNCTIONS.filter(f => {
+    const matchCat = activeCategory === "Todas" || f.cat === activeCategory;
+    const matchSearch = !query || f.name.toLowerCase().includes(query) || f.desc.toLowerCase().includes(query) || f.cat.toLowerCase().includes(query);
+    return matchCat && matchSearch;
+  });
+  renderFunctions(filtered);
+}
+
+function renderFunctions(list) {
+  const container = document.getElementById('functionsContainer');
+  const noResults = document.getElementById('noResults');
+  container.innerHTML = '';
+
+  document.getElementById('visibleCount').textContent = list.length;
+
+  if (list.length === 0) {
+    noResults.classList.add('show');
+    return;
+  }
+  noResults.classList.remove('show');
+
+  // Group by category
+  const groups = {};
+  list.forEach(f => {
+    if (!groups[f.cat]) groups[f.cat] = [];
+    groups[f.cat].push(f);
+  });
+
+  let delay = 0;
+  Object.keys(groups).forEach(cat => {
+    const c = CATEGORIES[cat] || { color: "#888", bg: "rgba(128,128,128,0.1)", icon: "📌" };
+
+    // Section header
+    const sec = document.createElement('div');
+    sec.className = 'section-header';
+    sec.innerHTML = `
+      <div class="section-line"></div>
+      <div class="section-title">${c.icon} ${cat}</div>
+      <div class="section-line"></div>
+    `;
+    container.appendChild(sec);
+
+    // Grid
+    const grid = document.createElement('div');
+    grid.className = 'functions-grid';
+    grid.style.marginBottom = '36px';
+
+    groups[cat].forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'func-card';
+      card.style.cssText = `--card-accent: ${c.color}; animation-delay: ${delay * 40}ms`;
+      card.innerHTML = `
+        <div class="func-card-top">
+          <div class="func-name">${f.name}()</div>
+          <div class="func-icon" style="background:${c.bg}; color:${c.color}">${c.icon}</div>
+        </div>
+        <div class="func-desc">${f.desc}</div>
+        <div class="func-footer">
+          <span class="func-cat" style="background:${c.bg}; color:${c.color}">${cat}</span>
+          <div class="func-arrow">→</div>
+        </div>
+      `;
+      card.onclick = () => openModal(f);
+      grid.appendChild(card);
+      delay++;
+    });
+
+    container.appendChild(grid);
+  });
+}
+
+// =============================================
+//  MODAL
+// =============================================
+function openModal(f) {
+  currentFunc = f;
+  const c = CATEGORIES[f.cat] || { color: "#888", bg: "rgba(128,128,128,0.1)", icon: "📌" };
+
+  document.getElementById('modalIcon').style.cssText = `background:${c.bg}; color:${c.color}; font-size:24px`;
+  document.getElementById('modalIcon').textContent = c.icon;
+  document.getElementById('modalTitle').textContent = f.name + '()';
+  document.getElementById('modalSubtitle').textContent = f.desc;
+  document.getElementById('modalPrompt').textContent = f.prompt;
+  document.getElementById('modalTip').innerHTML = `<span>💡</span><span>${f.tip.replace('💡 ','')}</span>`;
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.innerHTML = '<span>📋</span> Copiar Prompt';
+  copyBtn.className = 'copy-btn';
+  copyBtn.style.background = c.color;
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function copyPrompt() {
+  if (!currentFunc) return;
+  navigator.clipboard.writeText(currentFunc.prompt).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<span>✅</span> ¡Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '<span>📋</span> Copiar Prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
